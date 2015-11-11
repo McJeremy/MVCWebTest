@@ -6,6 +6,7 @@ using System.Web.Mvc;
 
 namespace Ninesky.Web.Areas.Member.Controllers
 {
+    [Authorize]
     public class HomeController : Controller
     {
         // GET: Member/Home

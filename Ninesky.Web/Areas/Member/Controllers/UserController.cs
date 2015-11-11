@@ -13,7 +13,8 @@ using System.Web.Mvc;
 
 namespace Ninesky.Web.Areas.Member.Controllers
 {
-    public class UserController : Controller
+    [Authorize]
+public class UserController : Controller
     {
         private IAuthenticationManager AuthenticationManager
         {
@@ -36,6 +37,7 @@ namespace Ninesky.Web.Areas.Member.Controllers
         {
             return View();
         }
+        [AllowAnonymous]
         [HttpGet]
         public ActionResult VerificationCode()
         {
@@ -45,13 +47,13 @@ namespace Ninesky.Web.Areas.Member.Controllers
             TempData["VerificationCode"] = code.ToUpper();
             return null;
         }
-
+        [AllowAnonymous]
         [HttpGet]
         public ActionResult Register()
         {
             return View();
         }
-
+        [AllowAnonymous]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Register(RegisterViewModel  register)
@@ -89,7 +91,7 @@ namespace Ninesky.Web.Areas.Member.Controllers
                     {
                         //return Content("注册成功！");
                         ////AuthenticationManager.SignIn();
-                        var ci = userService.CreateIdentity(_user);
+                        var ci = userService.CreateIdentity(_user,DefaultAuthenticationTypes.ApplicationCookie);
                         AuthenticationManager.SignOut(DefaultAuthenticationTypes.ApplicationCookie);
                         AuthenticationManager.SignIn(ci);
 
@@ -101,13 +103,13 @@ namespace Ninesky.Web.Areas.Member.Controllers
             }
             return View(register);
         }
-
+        [AllowAnonymous]
         [HttpGet]
         public ActionResult Login(string returnUrl)
         {
             return View();
         }
-
+        [AllowAnonymous]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Login(LoginViewModel loginViewModel)
@@ -121,13 +123,13 @@ namespace Ninesky.Web.Areas.Member.Controllers
                 }
                 else if (_user.Password == Security.Sha256(loginViewModel.Password))
                 {
-                    var ci = userService.CreateIdentity(_user);
-                    AuthenticationManager.SignOut(DefaultAuthenticationTypes.ApplicationCookie);
-                    AuthenticationManager.SignIn(new AuthenticationProperties() { IsPersistent = loginViewModel.RememberMe }, ci);
-
                     _user.LoginIP = Request.UserHostAddress;
                     _user.LoginTime = DateTime.Now;
                     userService.Update(_user);
+
+                    var ci = userService.CreateIdentity(_user,DefaultAuthenticationTypes.ApplicationCookie);
+                    AuthenticationManager.SignOut(DefaultAuthenticationTypes.ApplicationCookie);
+                    AuthenticationManager.SignIn(new AuthenticationProperties() { IsPersistent = loginViewModel.RememberMe }, ci);
 
                     return RedirectToAction("Index", "Home");
                 }
@@ -141,10 +143,69 @@ namespace Ninesky.Web.Areas.Member.Controllers
         }
 
         [HttpGet]
-        public ActionResult Loginout()
+        public ActionResult Logout()
         {
             AuthenticationManager.SignOut(DefaultAuthenticationTypes.ApplicationCookie);
             return Redirect(Url.Content("~/"));
+        }
+
+        public ActionResult Menu()
+        {
+            return PartialView();
+            //return View();
+        }
+
+        public ActionResult Details()
+        {
+            return View(userService.Find(User.Identity.Name));
+        }
+
+        /// <summary>
+        /// 修改资料
+        /// </summary>
+        /// <returns></returns>
+        [ValidateAntiForgeryToken]
+        [HttpPost]
+        public ActionResult Modify()
+        {
+
+            var _user = userService.Find(User.Identity.Name);
+            if (_user == null) ModelState.AddModelError("", "用户不存在");
+            else
+            {
+                if (TryUpdateModel(_user, new string[] { "DisplayName", "Email" }))
+                {
+                    if (ModelState.IsValid)
+                    {
+                        if (userService.Update(_user)) ModelState.AddModelError("", "修改成功！");
+                        else ModelState.AddModelError("", "无需要修改的资料");
+                    }
+                }
+                else ModelState.AddModelError("", "更新模型数据失败");
+            }
+            return View("Details", _user);
+        }
+        
+        public ActionResult ChangePassword()
+        {
+            return View();
+        }
+        [ValidateAntiForgeryToken]
+        [HttpPost]
+        public ActionResult ChangePassword(ChangePasswordViewModel passwordViewModel)
+        {
+            if (ModelState.IsValid)
+            {
+                var _user = userService.Find(User.Identity.Name);
+                if (_user.Password == Common.Security.Sha256(passwordViewModel.OriginalPassword))
+                {
+                    _user.Password = Common.Security.Sha256(passwordViewModel.Password);
+                    if (userService.Update(_user)) ModelState.AddModelError("", "修改密码成功");
+                    else ModelState.AddModelError("", "修改密码失败");
+                }
+                else ModelState.AddModelError("", "原密码错误");
+            }
+            return View(passwordViewModel);
         }
     }
 }

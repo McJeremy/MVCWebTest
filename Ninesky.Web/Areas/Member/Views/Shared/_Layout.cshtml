@@ -8,30 +8,26 @@
     @Scripts.Render("~/bundles/modernizr")
 </head>
 <body>
-    <div class="navbar navbar-inverse navbar-fixed-top">
-        <div class="container">
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>                
-                @Html.ActionLink("知识管理", "Index", "Home", new { area = "" }, new { @class = "navbar-brand" })
-            </div>
-            <div class="navbar-collapse collapse">
+    <header class="navbar navbar-static-top navbar-inverse bs-docs-nav" role="banner">
+        <div class="container">           
+            <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
                 <ul class="nav navbar-nav">
+                    <li>
+                        <a href="@Url.Action("Details","User")">欢迎 @User.Identity.Name</a>
+                    </li>
                 </ul>
-            </div>
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        @Html.ActionLink("退出", "Logout", "User")
+                    </li>
+                </ul>
+            </nav>
         </div>
-    </div>
-
-    <div class="container body-content">
+    </header>
+    <div class="container">
         @RenderBody()
-        <hr />
-        <footer>
-            <p>&copy; @DateTime.Now.Year - My ASP.NET Application</p>
-        </footer>
     </div>
+    <footer></footer>
 
     @Scripts.Render("~/bundles/jquery")
     @Scripts.Render("~/bundles/bootstrap")

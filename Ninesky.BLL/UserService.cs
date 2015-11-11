@@ -7,6 +7,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNet.Identity;
 
 namespace Ninesky.BLL
 {
@@ -59,14 +60,13 @@ namespace Ninesky.BLL
 
         }
 
-        public ClaimsIdentity CreateIdentity(User user)
+        public ClaimsIdentity CreateIdentity(User user, string authenticationType)
         {
-            //DefaultAuthenticationTypes.ApplicationCookie
-               var ci = new ClaimsIdentity("ApplicationCookie");
+            var ci = new ClaimsIdentity(DefaultAuthenticationTypes.ApplicationCookie);
             ci.AddClaim(new Claim(ClaimTypes.Name, user.UserName));
             ci.AddClaim(new Claim(ClaimTypes.NameIdentifier, user.UserID.ToString()));
             ci.AddClaim(new Claim("http://schemas.microsoft.com/accesscontrolservice/2010/07/claims/identityprovider", "ASP.NET Identity"));
-            ci.AddClaim(new Claim("DisplayName", user.DisplayName));
+            ci.AddClaim(new Claim("DisplayName", user.DisplayName));                   
             return ci;
         }
     }
